@@ -13,13 +13,7 @@ def permute_rows(pattern, i,j):
         pattern[k][i] = pattern[k][j]
         pattern[k][j] = temp
 
-if __name__ == '__main__':
-    N=int(argv[1]) if len(argv) > 1 else 0
-    step=int(argv[2]) if len(argv) > 2 else 0
-    seed = int(argv[3]) if len(argv) > 3 else 0
-
-    np.random.seed(seed)
-
+def generate_pattern(N, step):
     pattern = []
 
     ini_tup=[j for j in range(step)]
@@ -51,6 +45,22 @@ if __name__ == '__main__':
         b = np.random.randint(0, len(pattern))
         permute_rows(pat_dict, a, b)
 
+    return pat_dict
+
+
+if __name__ == '__main__':
+    N=int(argv[1]) if len(argv) > 1 else 0
+    step=int(argv[2]) if len(argv) > 2 else 0
+    Npatterns=int(argv[3]) if len(argv) > 3 else 0
+    seed = int(argv[4]) if len(argv) > 4 else 0
+
+    np.random.seed(seed)
+
+    patterns = []
+    for n in range(Npatterns):
+        pat_dict = generate_pattern(N, step)
+        patterns.append(pat_dict)
+
     #print(pat_dict)
-    with open("pattern.json", "w") as f:
-        json.dump(pat_dict, f)
+    with open("patterns.json", "w") as f:
+        json.dump(patterns, f)
