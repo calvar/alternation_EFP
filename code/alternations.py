@@ -21,8 +21,6 @@ def generate_pattern(N, step):
     i=0
     while ((tup != ini_tup) or i==0):
         pattern.append(['1' if j in tup else '0' for j in range(N)])
-        #print([1 if j in tup else 0 for j in range(N)])
-        #print(list(tup))
         i += step
         tup = [(i+j)%N for j in range(step)]
     #print(pattern)
