@@ -13,7 +13,7 @@ def permute_rows(pattern, i,j):
         pattern[k][i] = pattern[k][j]
         pattern[k][j] = temp
 
-def generate_pattern(N, step):
+def generate_pattern(N, step, permute_columns=False, permute_rows=False):
     pattern = []
 
     ini_tup=[j for j in range(step)]
@@ -31,17 +31,18 @@ def generate_pattern(N, step):
             pat_dict[i] = pat_dict.get(i, []) + [pattern[n][i]]
     #print(pat_dict)
 
-    num_col_permut = np.random.randint(0, N)
-    for i in range(num_col_permut):
-        a = np.random.randint(0, N)
-        b = np.random.randint(0, N)
-        permute_cols(pat_dict, a, b)
-
-    num_row_permut = np.random.randint(0, len(pattern))
-    for i in range(num_row_permut):
-        a = np.random.randint(0, len(pattern))
-        b = np.random.randint(0, len(pattern))
-        permute_rows(pat_dict, a, b)
+    if permute_columns:
+        num_col_permut = np.random.randint(0, N)
+        for i in range(num_col_permut):
+            a = np.random.randint(0, N)
+            b = np.random.randint(0, N)
+            permute_cols(pat_dict, a, b)
+    if permute_rows:
+        num_row_permut = np.random.randint(0, len(pattern))
+        for i in range(num_row_permut):
+            a = np.random.randint(0, len(pattern))
+            b = np.random.randint(0, len(pattern))
+            permute_rows(pat_dict, a, b)
 
     return pat_dict
 
@@ -49,7 +50,7 @@ def generate_pattern(N, step):
 if __name__ == '__main__':
     N=int(argv[1]) if len(argv) > 1 else 0
     step=int(argv[2]) if len(argv) > 2 else 0
-    Npatterns=int(argv[3]) if len(argv) > 3 else 0
+    Npatterns=int(argv[3]) if len(argv) > 3 else 1
     seed = int(argv[4]) if len(argv) > 4 else 0
 
     np.random.seed(seed)
