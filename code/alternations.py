@@ -2,12 +2,12 @@ import numpy as np
 from sys import argv
 import json
 
-def permute_cols(pattern, i,j):
+def column_permutation(pattern, i,j):
     temp = pattern[i]
     pattern[i] = pattern[j]
     pattern[j] = temp
 
-def permute_rows(pattern, i,j):
+def row_permutation(pattern, i,j):
     for k in range(len(pattern)):
         temp = pattern[k][i]
         pattern[k][i] = pattern[k][j]
@@ -36,13 +36,13 @@ def generate_pattern(N, step, permute_columns=False, permute_rows=False):
         for i in range(num_col_permut):
             a = np.random.randint(0, N)
             b = np.random.randint(0, N)
-            permute_cols(pat_dict, a, b)
+            column_permutation(pat_dict, a, b)
     if permute_rows:
         num_row_permut = np.random.randint(0, len(pattern))
         for i in range(num_row_permut):
             a = np.random.randint(0, len(pattern))
             b = np.random.randint(0, len(pattern))
-            permute_rows(pat_dict, a, b)
+            row_permutation(pat_dict, a, b)
 
     return pat_dict
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     patterns = []
     for n in range(Npatterns):
-        pat_dict = generate_pattern(N, step)
+        pat_dict = generate_pattern(N, step, permute_columns=True, permute_rows=True)
         patterns.append(pat_dict)
 
     #print(pat_dict)
