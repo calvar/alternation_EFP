@@ -98,7 +98,7 @@ class StrategyGraphBuilder:
         pattern: Dict[str, str],
         idx: int,
         neighbour_mat: np.ndarray,
-        shuffle: bool = False,
+        shuffle: bool = True,
     ) -> Optional[Tuple[Tuple[str, ...], Dict[str, str], Dict[str, int]]]:
         """
         Infer a deterministic mapping from observed neighbour columns to the
@@ -111,7 +111,7 @@ class StrategyGraphBuilder:
             combos = list(combinations(neighbours, subset_size))
             if shuffle:
                 self.rng.shuffle(combos)                      # <-- uses caller's RNG
-
+            
             for cols in combos:
                 cols_sorted = sorted(cols)
                 mask = [i in cols_sorted for i in range(self.N)]
