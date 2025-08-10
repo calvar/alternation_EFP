@@ -32,13 +32,17 @@ def print_pattern(agent_info: dict) -> None:
         state = get_state(agent_info, t)
         print(state)
 
-def simulate(n: int, s: int, idx: int, Nsteps: int, down_time: int = 0, 
+def simulate(n: int, s: int, idx: int, Nsteps: int, 
+             init_cond: str = None,
+             down_time: int = 0, 
              down_lapse: int = 0, down_agent: int = None) -> list[str]:
     data = load_graph_data(n, s)
     agent_info = data[idx]
     #print_pattern(agent_info)
 
     prev_state = get_state(agent_info, 0)
+    if init_cond:
+        prev_state = init_cond
     pattern = [prev_state]
     is_down = False
     for step in range(Nsteps):
