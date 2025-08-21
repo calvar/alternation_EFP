@@ -56,11 +56,16 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         for agent in agent_info:
             key = ''.join(prev_state[int(i)] for i in agent_info[agent]['neigh'])
             
-            action = agent_info[agent]['strat'][key]
+            action = ''
+            if key in agent_info[agent]['strat']:
+                action = agent_info[agent]['strat'][key]
+            else:
+                action = np.random.choice(['0', '1'])
+
             if is_down and int(agent) == down_agent:
                 action = np.random.choice(['0', '1'])
-                
             state += action
+
         pattern.append(state)
         prev_state = state
 
