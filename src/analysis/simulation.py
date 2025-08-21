@@ -43,8 +43,13 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     prev_state = get_state(agent_info, 0)
     if init_cond:
         prev_state = init_cond
+
     pattern = [prev_state]
     is_down = False
+    state_status = 'normal'
+    countdown = False
+    apply_correction = False
+    wait_steps = n
     for step in range(Nsteps):
         if down_agent is not None:
             if step >= down_time and not is_down:
@@ -64,9 +69,40 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
 
             if is_down and int(agent) == down_agent:
                 action = np.random.choice(['0', '1'])
+
+            if apply_correction and int(agent) == down_agent:
+                if state_status == 'low' and action == '0':
+                    action = '1'
+                elif state_status == 'high' and action == '1':
+                    action = '0'
+                apply_correction = False
+
             state += action
 
+        if np.array([int(a) for a in state]).sum() == s:
+            state_status = 'normal'
+        elif np.array([int(a) for a in state]).sum() < s:
+            state_status = 'low'
+        else:
+            state_status = 'high'
+
+        # After the node goes back online, allow for n steps to 
+        # pass before applying a correction. If the down node is
+        # not in a cycle, the system should correct itself after, at most,
+        # n steps.
+        if (state_status != 'normal') and (not is_down):
+            if wait_steps == n:
+                countdown = True
+            if countdown:
+                wait_steps -= 1
+            if countdown and wait_steps == 0:
+                countdown = False
+                wait_steps = n
+                apply_correction = True
+            
         pattern.append(state)
         prev_state = state
+
+        print(state, state_status, is_down, wait_steps, apply_correction)
 
     return pattern
