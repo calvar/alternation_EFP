@@ -12,6 +12,31 @@ class Agent:
         self.state = state
         self.is_down = False
 
+    def take_action(self, key):
+        if key in self.strategy:
+            self.state = self.strategy[key]
+        else:
+            print(f"Agent {self.id}: key '{key}' not found")
+            self.state = np.random.choice(['0', '1'])
+
+        if self.is_down:
+            print(f"Agent {self.id} is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
+            self.state = np.random.choice(['0', '1'])
+            print(f"but is now '{self.state}'")
+
+    def correct(self, state_status: str):
+        if state_status == 'low' and self.state == '0':
+            self.state = '1'
+            print(f"Agent {self.id} correcting state to '1'")
+            return True
+        elif state_status == 'high' and self.state == '1':
+            self.state = '0'
+            print(f"Agent {self.id} correcting state to '0'")
+            return True
+        else:
+            print(f"Agent {self.id} no correction performed.")
+            return False
+
     def __str__(self):
         return f"id:{self.id}\nstrategy:{self.strategy}\nneighbors:{self.neighbors}\nstate:{self.state}"
 
@@ -93,24 +118,14 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
             key = ''.join(prev_state[int(i)] for i in agent.neighbors)
             #print(key)
 
-            action = ''
-            if key in agent.strategy:
-                action = agent.strategy[key]
-            else:
-                print(f"Agent {agent.id}: key '{key}' not found")
-                action = np.random.choice(['0', '1'])
-
-            if agent.is_down:
-                action = np.random.choice(['0', '1'])
+            agent.take_action(key)
 
             if apply_correction and agent.id == down_agent:
                 print("Correcting...")
-                if state_status == 'low' and action == '0':
-                    action = '1'
-                elif state_status == 'high' and action == '1':
-                    action = '0'
-                apply_correction = False
-            agent.state = action
+                performed_correction = agent.correct(state_status)
+                if performed_correction:
+                    apply_correction = False
+                    wait_steps = n
 
             state += agent.state
 
