@@ -1,4 +1,3 @@
-
 import json
 import numpy as np
 from config.config import PATHS
@@ -13,23 +12,19 @@ class Agent:
         self.is_down = False
         self.countdown = -1
 
-    def switch_on(self, n: int):
+    def back_online(self, n: int):
         print(f"Agent {self.id} back online.")
         self.is_down = False
         self.countdown = n
 
     def take_action(self, key: str, state_status: str):
-        if key in self.strategy:
-            self.state = self.strategy[key]
-        else:
-            print(f"Agent {self.id}: key '{key}' not found")
-            self.state = np.random.choice(['0', '1'])
+        if not self.is_down:
+            if key in self.strategy:
+                self.state = self.strategy[key]
+            else:
+                print(f"Agent {self.id}: key '{key}' not found")
+                self.state = np.random.choice(['0', '1'])
 
-        if self.is_down:
-            print(f"Agent {self.id} is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
-            self.state = np.random.choice(['0', '1'])
-            print(f"but is now '{self.state}'")
-        else:  
             # After the node goes back online, allow for n steps to 
             # pass before applying a correction. If the down node is
             # not in a cycle, the system should correct itself after, at most,
@@ -40,7 +35,11 @@ class Agent:
                 performed_correction = self.correct(state_status)
                 if not performed_correction:
                     self.countdown = 1
-
+        else:
+            print(f"Agent {self.id} is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
+            self.state = np.random.choice(['0', '1'])
+            print(f"but is now '{self.state}'")
+            
     def correct(self, state_status: str):
         if state_status == 'low' and self.state == '0':
             self.state = '1'
@@ -128,7 +127,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
             if step == down_time:
                 agents[down_agent].is_down = True
             if step == down_time + down_lapse:
-                agents[down_agent].switch_on(n)
+                agents[down_agent].back_online(n)
 
         state = ''
         for agent in agents:
