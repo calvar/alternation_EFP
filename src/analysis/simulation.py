@@ -11,41 +11,42 @@ class Agent:
         self.neighbors = neighbors
         self.state = state
         self.cycle = cycle
-        self.one_in_cycle = ones_in_cycle
+        self.ones_in_cycle = ones_in_cycle
         self.is_down = False
         self.correct = False
 
-    def back_online(self, n: int):
+    def back_online(self):
         print(f"Agent {self.id} back online.")
         self.is_down = False
         self.correct = True
 
-    def take_action(self, key: str, cycle_status: list[str]):
-        if not self.is_down:
-            if key in self.strategy:
-                self.state = self.strategy[key]
-            else:
-                print(f"Agent {self.id}: key '{key}' not found")
-                self.state = np.random.choice(['0', '1'])
-
-            # After the node goes back online, the system should correct 
-            # itself.
-            if self.cycle >= 0:
-                if self.correct and cycle_status[self.cycle] != 'normal':
-                    performed_correction = self.correct(cycle_status[self.cycle])
-                    if performed_correction:
-                        self.correct = False  # ACTUNG!!! Only one correction per down event!
+    def take_action(self, key: str, cycle_status: list[int]):
+        if key in self.strategy:
+            self.state = self.strategy[key]
         else:
+            print(f"Agent {self.id}: key '{key}' not found")
+            self.state = np.random.choice(['0', '1'])
+
+        if self.is_down:
             print(f"Agent {self.id} is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
             self.state = np.random.choice(['0', '1'])
             print(f"but is now '{self.state}'")
+
+        # After the node goes back online, the system should correct 
+        # itself.
+        if self.cycle >= 0:
+            if self.correct and (cycle_status[self.cycle]-self.ones_in_cycle != 0):
+                performed_correction = self.correct_state(cycle_status[self.cycle])
+                if performed_correction:
+                    self.correct = False  # ACTUNG!!! Only one correction per down event!
+        
             
-    def correct_state(self, state_status: str):
-        if state_status == 'low' and self.state == '0':
+    def correct_state(self, state_status: int):
+        if (state_status-self.ones_in_cycle < 0) and self.state == '0':
             self.state = '1'
             print(f"Agent {self.id} correcting state to '1'")
             return True
-        elif state_status == 'high' and self.state == '1':
+        elif (state_status-self.ones_in_cycle > 0) and self.state == '1':
             self.state = '0'
             print(f"Agent {self.id} correcting state to '0'")
             return True
@@ -88,6 +89,13 @@ def print_pattern(agent_info: dict) -> None:
         state = get_state(agent_info, t)
         print(state)
 
+def ones(agents: list[Agent], num_cycles: int) -> list[int]:
+    ones_in_cycle = [0 for _ in range(num_cycles)]
+    for agent in agents:
+        if agent.cycle >= 0 and agent.state == '1':
+            ones_in_cycle[agent.cycle] += 1
+    return ones_in_cycle
+
 def simulate(n: int, s: int, idx: int, Nsteps: int, 
              init_cond: str = None,
              down_time: int = 0, 
@@ -116,39 +124,29 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         agents.append(agent)
         #print(str(agent))
         num_cycles = max(num_cycles, agent.cycle + 1)
-    print(get_state_from_agents(agents))
+    #print(get_state_from_agents(agents))
     print(f"num_cycles: {num_cycles}")
 
 
-    
-    # pattern = [prev_state]
-    # # is_down = False
-    # state_status = 'normal'
-    # countdown = False
-    # apply_correction = False
-    # wait_steps = n
-    # for step in range(Nsteps):
-    #     if down_agent is not None:
-    #         if step == down_time:
-    #             agents[down_agent].is_down = True
-    #         if step == down_time + down_lapse:
-    #             agents[down_agent].back_online(n)
+    ones_in_cycle = ones(agents, num_cycles)
+    pattern = [prev_state]
+    for step in range(Nsteps):
+        if down_agent is not None:
+            if step == down_time:
+                agents[down_agent].is_down = True
+            if step == down_time + down_lapse:
+                agents[down_agent].back_online()
 
-    #     state = ''
-    #     for agent in agents:
-    #         key = ''.join(prev_state[int(i)] for i in agent.neighbors)
-    #         #print(key)
+        state = ''
+        for agent in agents:
+            key = ''.join(prev_state[int(i)] for i in agent.neighbors)
+            #print(key)
 
-    #         agent.take_action(key, state_status)
+            agent.take_action(key, ones_in_cycle)
 
-    #         # if apply_correction and agent.id == down_agent: # THIS IS A HOLE IN THE ARGUMENT! AN EXTERNAL FACTOR IS IDENTIFYING THE DOWN AGENT
-    #         #     print("Correcting...")
-    #         #     performed_correction = agent.correct(state_status)
-    #         #     if performed_correction:
-    #         #         apply_correction = False
-    #         #         wait_steps = n
+            state += agent.state
 
-    #         state += agent.state
+        ones_in_cycle = ones(agents, num_cycles)
 
     #     if np.array([int(a) for a in state]).sum() == s:
     #         state_status = 'normal'
@@ -156,24 +154,13 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     #         state_status = 'low'
     #     else:
     #         state_status = 'high'
-
-    #     # # After the node goes back online, allow for n steps to 
-    #     # # pass before applying a correction. If the down node is
-    #     # # not in a cycle, the system should correct itself after, at most,
-    #     # # n steps.
-    #     # if (state_status != 'normal') and (not agents[down_agent].is_down):
-    #     #     if wait_steps == n:
-    #     #         countdown = True
-    #     #     if countdown:
-    #     #         wait_steps -= 1
-    #     #     if countdown and wait_steps == 0:
-    #     #         countdown = False
-    #     #         wait_steps = n
-    #     #         apply_correction = True
             
-    #     pattern.append(state)
-    #     prev_state = state
+        pattern.append(state)
+        prev_state = state
 
-    #     print(f"state: {state}\nstate_status: {state_status}\nagent.is_down: {agents[down_agent].is_down}\nwait_steps: {agents[down_agent].countdown}\n")
+        print(f"state: {state}\nstate_status: {ones_in_cycle}")
+        if down_agent is not None:
+            print(f"agent.is_down: {agents[down_agent].is_down}")
+        print()
 
-    # return pattern
+    return pattern
