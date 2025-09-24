@@ -3,6 +3,8 @@ import numpy as np
 from config.config import PATHS
 
 
+np.random.seed(54)
+
 class Agent:
     def __init__(self, id: int, strategy: dict, neighbors: list[int], state: str = '0', 
                  cycle: int = -1, ones_in_cycle: int = 0):
@@ -28,17 +30,17 @@ class Agent:
             self.state = np.random.choice(['0', '1'])
 
         if self.is_down:
-            print(f"Agent {self.id} is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
+            print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
             self.state = np.random.choice(['0', '1'])
             print(f"but is now '{self.state}'")
-
-        # After the node goes back online, the system should correct 
-        # itself.
-        if self.cycle >= 0:
-            if self.correct and (cycle_status[self.cycle]-self.ones_in_cycle != 0):
-                performed_correction = self.correct_state(cycle_status[self.cycle])
-                if performed_correction:
-                    self.correct = False  # ACTUNG!!! Only one correction per down event!
+        else:
+            # After the node goes back online, the system should correct
+            # itself.
+            if self.cycle >= 0:
+                if self.correct and (cycle_status[self.cycle]-self.ones_in_cycle != 0):
+                    performed_correction = self.correct_state(cycle_status[self.cycle])
+                    if performed_correction:
+                        self.correct = False  # ACTUNG!!! Only one correction per down event!
         
             
     def correct_state(self, state_status: int):
@@ -126,6 +128,8 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         num_cycles = max(num_cycles, agent.cycle + 1)
     #print(get_state_from_agents(agents))
     print(f"num_cycles: {num_cycles}")
+
+    print(f"da: {agents[down_agent].cycle}")
 
 
     ones_in_cycle = ones(agents, num_cycles)
