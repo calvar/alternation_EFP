@@ -3,7 +3,6 @@ import numpy as np
 from config.config import PATHS
 
 
-np.random.seed(54)
 
 class Agent:
     def __init__(self, id: int, strategy: dict, neighbors: list[int], state: str = '0', 
@@ -22,35 +21,36 @@ class Agent:
         self.is_down = False
         self.correct = True
 
-    def take_action(self, key: str, cycle_status: list[int]):
+    def take_action(self, key: str, cycle_status: list[int], rng: np.random.Generator = None):
         if key in self.strategy:
             self.state = self.strategy[key]
         else:
             print(f"Agent {self.id}: key '{key}' not found")
-            self.state = np.random.choice(['0', '1'])
+            self.state = rng.choice(['0', '1'])
 
         if self.is_down:
             print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
-            self.state = np.random.choice(['0', '1'])
+            self.state = rng.choice(['0', '1'])
             print(f"but is now '{self.state}'")
         else:
             # After the node goes back online, the system should correct
             # itself.
             if self.cycle >= 0:
-                if self.correct and (cycle_status[self.cycle]-self.ones_in_cycle != 0):
-                    performed_correction = self.correct_state(cycle_status[self.cycle])
-                    if performed_correction:
-                        self.correct = False  # ACTUNG!!! Only one correction per down event!
+                if self.correct:
+                    if (cycle_status[self.cycle]-self.ones_in_cycle != 0):
+                        performed_correction = self.correct_state(cycle_status[self.cycle])
+                    else:
+                        self.correct = False  
         
             
     def correct_state(self, state_status: int):
         if (state_status-self.ones_in_cycle < 0) and self.state == '0':
             self.state = '1'
-            print(f"Agent {self.id} correcting state to '1'")
+            print(f"Agent {self.id} correcting state from '0' to '1'")
             return True
         elif (state_status-self.ones_in_cycle > 0) and self.state == '1':
             self.state = '0'
-            print(f"Agent {self.id} correcting state to '0'")
+            print(f"Agent {self.id} correcting state from '1' to '0'")
             return True
         else:
             print(f"Agent {self.id} no correction performed.")
@@ -100,8 +100,13 @@ def ones(agents: list[Agent], num_cycles: int) -> list[int]:
 
 def simulate(n: int, s: int, idx: int, Nsteps: int, 
              init_cond: str = None,
-             down_time: int = 0, 
-             down_lapse: int = 0, down_agent: int = None) -> list[str]:
+             down_times: list[int] = None, 
+             down_lapses: list[int] = None, 
+             down_agents: list[int] = None,
+             seed: int = 54) -> list[str]:
+    #For reproducibility
+    rng = np.random.default_rng(seed)
+
     data = load_graph_data(n, s)
     #print(data)
     agent_info = data[idx]
@@ -129,24 +134,26 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     #print(get_state_from_agents(agents))
     print(f"num_cycles: {num_cycles}")
 
-    print(f"da: {agents[down_agent].cycle}")
+    for da in down_agents:
+        print(f"da: {agents[da].cycle}")
 
 
     ones_in_cycle = ones(agents, num_cycles)
     pattern = [prev_state]
     for step in range(Nsteps):
-        if down_agent is not None:
-            if step == down_time:
-                agents[down_agent].is_down = True
-            if step == down_time + down_lapse:
-                agents[down_agent].back_online()
+        if down_agents is not None:
+            for i in range(len(down_agents)):            
+                if step == down_times[i]:
+                    agents[down_agents[i]].is_down = True
+                if step == down_times[i] + down_lapses[i]:
+                    agents[down_agents[i]].back_online()
 
         state = ''
         for agent in agents:
             key = ''.join(prev_state[int(i)] for i in agent.neighbors)
             #print(key)
 
-            agent.take_action(key, ones_in_cycle)
+            agent.take_action(key, ones_in_cycle, rng)
 
             state += agent.state
 
@@ -163,8 +170,6 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         prev_state = state
 
         print(f"state: {state}\nstate_status: {ones_in_cycle}")
-        if down_agent is not None:
-            print(f"agent.is_down: {agents[down_agent].is_down}")
         print()
 
     return pattern
