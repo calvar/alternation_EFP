@@ -38,20 +38,28 @@ class Agent:
             if self.cycle >= 0:
                 if self.correct:
                     if (cycle_status[self.cycle]-self.ones_in_cycle != 0):
-                        performed_correction = self.correct_state(cycle_status[self.cycle])
+                        performed_correction = self.correct_state(cycle_status[self.cycle], rng)
                     else:
                         self.correct = False  
         
             
-    def correct_state(self, state_status: int):
+    def correct_state(self, state_status: int, rng: np.random.Generator = None) -> bool:
         if (state_status-self.ones_in_cycle < 0) and self.state == '0':
-            self.state = '1'
-            print(f"Agent {self.id} correcting state from '0' to '1'")
-            return True
+            if(rng.choice(['0', '1']) == '1'):
+                self.state = '1'
+                print(f"Agent {self.id} correcting state from '0' to '1'")
+                return True
+            else:
+                print(f"Agent {self.id} no correction performed.")
+                return False
         elif (state_status-self.ones_in_cycle > 0) and self.state == '1':
-            self.state = '0'
-            print(f"Agent {self.id} correcting state from '1' to '0'")
-            return True
+            if(rng.choice(['0', '1']) == '1'):
+                self.state = '0'
+                print(f"Agent {self.id} correcting state from '1' to '0'")
+                return True
+            else:
+                print(f"Agent {self.id} no correction performed.")
+                return False
         else:
             print(f"Agent {self.id} no correction performed.")
             return False
