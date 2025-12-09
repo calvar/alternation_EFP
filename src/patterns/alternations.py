@@ -85,7 +85,7 @@ class PatternGenerator:
             The generated pattern. Keys are column indices; values are lists of
             ``'0'``/``'1'`` strings of equal length.
         """
-        # Step 1 – Build the base pattern as a list of rows -------------
+        # Step 1 – Build the base pattern as a list of rows, each one representing a the state at a given time -------------
         rows: List[Sequence[str]] = []
         initial_window = list(range(self.step))
         window = initial_window
@@ -97,7 +97,7 @@ class PatternGenerator:
             offset += self.step
             window = [(offset + idx) % self.N for idx in range(self.step)]
 
-        # Step 2 – Convert to column‑centric representation -------------
+        # Step 2 – Convert to column‑centric representation, where each value is the pattern for an agent through time -------------
         self._pattern = {
             col: [row[col] for row in rows] for col in range(self.N)
         }

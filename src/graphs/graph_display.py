@@ -1,6 +1,7 @@
 import json
 import random
 import networkx as nx
+from pyvis.network import Network
 
 import matplotlib.colors as mcolors
 from pathlib import Path
@@ -17,8 +18,8 @@ class GraphVisualizer:
         Initialize the GraphVisualizer.
         
         Args:
-            num_nodes: Number of nodes in the graph
-            num_steps: Number of steps in the graph evolution
+            num_nodes: Number of nodes (agents) in the graph
+            num_steps: Number of available spots in the system
         """
         self.struct = None
         self.N = num_nodes

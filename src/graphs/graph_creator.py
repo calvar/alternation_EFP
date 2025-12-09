@@ -108,7 +108,7 @@ class StrategyGraphBuilder:
         T = len(pattern[str(idx)])
 
         for subset_size in range(1, len(neighbours) + 1):
-            combos = list(combinations(neighbours, subset_size))
+            combos = list(combinations(neighbours, subset_size)) # list of neighbors to pay attention to
             if shuffle:
                 self.rng.shuffle(combos)                      # <-- uses caller's RNG
             
@@ -117,9 +117,9 @@ class StrategyGraphBuilder:
                 mask = [i in cols_sorted for i in range(self.N)]
                 filtered = self._filter_pattern(pattern, mask)
 
-                mapping: Dict[str, str] = {}
-                counts: Dict[str, int] = {}
-                consistent = True
+                mapping: Dict[str, str] = {} # rules: if you see key -> do target
+                counts: Dict[str, int] = {}  # how many times each key was observed
+                consistent = True     # check if a single key maps to a single target
 
                 for t in range(T):
                     key = "".join(filtered[str(c)][t] for c in cols_sorted)
