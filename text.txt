@@ -1,0 +1,23 @@
+1) Intoduction
+   -----------
+
+ a) The problem is how to arange the access of a set of N agents to a limited resource, whose availability is limited to n < N units per turn, given that we want an equal distribution of the resource over time to all agents. That is, which is the pattern that the agents have to follow when accessing the resource such that there is a minimum period of time T over which each agent has accessed the resource the same number of times. We call this access patterns alternations.
+ b) Why is alternation important.
+ c) A perfect alternation pattern can be obtained with a simple algorithm.
+ d) There are many studies that propose algorithms to let agents learn alternation patterns in a distributed way. Our aim however is not to propose a distributed learning algorithm, but rather to let a generator agent to obtain such patterns in an efficient way, and then distribute the pattern to the agents in play as a set of rules for each agent, such that, by following their respective set of rules, the alternation patern can be maintained in a distributed way. 
+ 
+2) Implementation of the alternation scheme
+   ----------------------------------------
+   
+  Once a central agent has generated the alternation pattern, it can be distributed to the set of autonomous agents as a set of rules for each agent.
+
+  A rule set is composed of two parts, a list of neighbors that the agent must observe and a strategy that indicates which action to take given the observed actions of its neighbors in the previous time step.
+
+  Starting from a valid initial configuration, i.e. a configuration present in the alternation pattern, each time step each agent observes the previous states of its neighbors, and then takes the action given by its set of strategies.  
+
+3) Neighbor graphs
+   ---------------
+   
+  The set of neighbor lists of the agents can be represented as a directed graph, where each node represents an agent, and a directed edge from agent i to agent j indicates that i belongs to the neighbor list of j.
+
+  For a given number of agents N and resource units per turn n, there might be several patterns that observe the constraints of equality of distribution and minimum period T. We now observe the characteristics of these solutions for diferent values of N and n. 

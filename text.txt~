@@ -1,0 +1,12 @@
+1) Intoduction
+   -----------
+
+ a) Why is alternation important
+ b) A perfect alternation pattern can be obtained with a simple algorithm
+ c) Previous attempts to obtain alternation from learning agents
+ 
+2) Implementation of the alternation scheme
+   ----------------------------------------
+  Once a central agent has generated the alternation pattern, it can be distributed to the set of autonomous agents as a set of rules for each agent. A rule set is composed of two parts, a neighbor list and a set of strategies that indicate which action to take given the observed actions of its neighbors in the previous time step.   
+ 
+ 
