@@ -120,11 +120,13 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     agent_info = data[idx]
     #print_pattern(agent_info)
     
+    ## Initial state---
     prev_state = get_state(agent_info, 0)
     if init_cond:
         prev_state = init_cond
     #print(prev_state)
 
+    ## Load agents---
     num_cycles = 0
     agents = []
     for i in range(len(agent_info)):
@@ -142,11 +144,14 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     #print(get_state_from_agents(agents))
     print(f"num_cycles: {num_cycles}")
 
+    ## Print info about agents that will go down---
     for da in down_agents:
         print(f"da: {agents[da].cycle}")
 
-
+    ## Create list to store the number of ones in each cycle---
     ones_in_cycle = ones(agents, num_cycles)
+
+    ## Simulation loop---
     pattern = [prev_state]
     for step in range(Nsteps):
         if down_agents is not None:

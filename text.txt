@@ -21,3 +21,7 @@
   The set of neighbor lists of the agents can be represented as a directed graph, where each node represents an agent, and a directed edge from agent i to agent j indicates that i belongs to the neighbor list of j.
 
   For a given number of agents N and resource units per turn n, there might be several patterns that observe the constraints of equality of distribution and minimum period T. We now observe the characteristics of these solutions for diferent values of N and n. 
+
+  Some of the solutions are such that each agent has a single neighbor. These solutions minimize the amount of information transfer that is needed to maintain the pattern running.
+
+  In addition, these minimum information solutions, which can be k-partite, contain a single cycle for each independent set.  
