@@ -162,7 +162,7 @@ class EntropyAnalyzer:
             info_averages.append(avg_info)
             
             if verbose:
-                print(f'Pattern {pattern_idx}: Average input information per node: {avg_info:.2f}')
+                print(f'Pattern {pattern_idx}: Average input information (bandwidth) per node: {avg_info:.2f}')
             
             # Calculate average input entropy per node
             avg_entropy = self.calculate_average_entropy_per_node(pattern_data, n)

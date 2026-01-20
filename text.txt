@@ -24,4 +24,19 @@
 
   Some of the solutions are such that each agent has a single neighbor. These solutions minimize the amount of information transfer that is needed to maintain the pattern running.
 
+  The minumum number of neighbors per agent is 1, and the patterns of two neighbors are shifted by 1 time unit.  
+
   In addition, these minimum information solutions, which can be k-partite, contain a single cycle for each independent set.  
+
+  The size of the minumum cycle is the fair period, that is the denominator of the most simplified form of n/N. This fair period is also the number of different patterns in the graph.
+
+  A cycle can only have a size which is a multiple of the number of different patterns, that determines the period of the general pattern. Otherwise the number of shifts won't allow for a periodic pattern.
+
+
+
+4) Robustness
+   ----------
+
+   As in any distributed system, an agent might go offline for a period of time, which disrupts the alternation pattern. 
+   
+   Therefore, it is important to devise strategies that allow the system to recuperate when nodes go offline.
