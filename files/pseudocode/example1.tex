@@ -1,0 +1,84 @@
+\documentclass{article}
+\usepackage[ruled,longend]{algorithm2e}
+
+\begin{document}
+
+\SetAlFnt{\rmfamily}
+\SetKwSty{textbf}
+\SetKwComment{Comment}{/*}{*/}
+\SetKwData{KwMat}{Matrix}
+\SetKwData{KwDict}{Dict}
+\SetKwArray{KwList}{List}
+\SetKwFunction{Mod}{Mod}
+\SetKw{Null}{null}
+\SetKw{Break}{break}
+\SetKw{True}{true}
+\SetKw{False}{false}
+
+
+\begin{algorithm}[h]
+  \DontPrintSemicolon
+  \caption{\rmfamily GetStrategy}\label{alg:getstr}
+  \KwIn{structure with $N$ rows and $T$ columns storing the pattern $P_{i,j}$=\KwMat{i,j} ($i\in\{0,N-1\}$, $j\in\{0,T-1\}$); agent index $idx$}
+  \KwOut{strategy for angent $idx$ $S$=\KwDict{key,action}}
+  $N \gets$ number of rows of $P$\;
+  $T \gets$ number of columns of $P$\;
+  \For{$num\_neigh \gets 1\dots N$}{
+    \Comment{all combinations of $num\_neigh$ neighbor indexes}
+    $neigh\_lists \gets$ Combinations(\KwList{$0,\dots,(N-1)$},$num\_neigh$)\;
+    $sz\gets N!/(num\_neigh!*(N-num\_neigh)!)$\; %%length of $neigh\_lists$\;
+    \For{$nlist \gets neigh\_lists[0]\dots neigh\_lists[sz-1]$}{
+      \Comment{filter out the pattern rows not in $nlist$}
+      $F \gets$ FilterPattern($P,nlist$)\;
+      \Comment{check if a valid strategy can be extracted from the filtered pattern}
+      $S \gets$GetValidStrategy(F)\;
+      \If{$S\neq\ $\Null}{
+        \Return $S$\;
+      }
+    }
+  }
+  \Return \Null
+\end{algorithm}
+
+\begin{algorithm}[h]
+  \DontPrintSemicolon
+  \caption{\rmfamily FilterPattern}\label{alg:filter}
+  \KwIn{pattern $P$=\KwMat{i,j} ($i\in\{0,N-1\}$, $j\in\{0,T-1\}$); neighbor index list $nlist=$\KwList{i_0,\dots,i_{r-1}} ($r\leq N$)} 
+  \KwOut{filtred pattern $F$=\KwMat{k,l} ($k\in\{0,r-1\}$, $l\in\{0,T-1\}$)}
+  $N \gets$ number of rows of $P$\;
+  $T \gets$ number of columns of $P$\;
+  $r \gets$ length of $nlist$\;
+  $F\gets$ \KwMat{k,l} ($k\in\{0,r-1\}$, $l\in\{0,T-1\})$\;
+  \For{$t\gets 0\dots T$}{
+    $c\gets 0$\;
+    \For{$i\gets nlist[0]\dots nlist[r-1]$}{
+      $F_{c,t}\gets P_{i,t}$\;
+      $c\gets c+1$\;
+    }
+  }
+  \Return $F$
+\end{algorithm}
+
+\begin{algorithm}[h]
+  \DontPrintSemicolon
+  \caption{\rmfamily GetValidStrategy}\label{alg:validstr}
+  \KwIn{pattern $F$; period of the pattern $T$; agent index $idx$}
+  \KwOut{strategy for agent $idx$ $S$=\KwDict{string,action}}
+  $S \gets$ empty \KwDict{}\;
+  \For{$t \gets 0\dots(T-1)$}{
+    $key\gets F_{\_,t}$ \Comment{get the $t$'th column of $F$}
+    $tmod\gets$ \Mod{$t+1$,$T$}\;
+    $action \gets F_{idx,tmod}$\;
+    \eIf{$key\in S$}{
+      \Comment{check if every key maps to a single action}
+      \If{$S[key]\neq action$}{
+        \Return \Null\;
+      }
+    }{
+      $S[key]\gets action$
+    }
+  }
+  \Return S
+\end{algorithm}
+
+\end{document}
