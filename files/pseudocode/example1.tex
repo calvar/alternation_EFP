@@ -14,9 +14,12 @@
 \SetKw{Break}{break}
 \SetKw{True}{true}
 \SetKw{False}{false}
+\SetKw{And}{and}
 
 
-\begin{algorithm}[h]
+\section{Translator}
+
+\begin{algorithm}[H]
   \DontPrintSemicolon
   \caption{\rmfamily GetStrategy}\label{alg:getstr}
   \KwIn{structure with $N$ rows and $T$ columns storing the pattern $P_{i,j}$=\KwMat{i,j} ($i\in\{0,N-1\}$, $j\in\{0,T-1\}$); agent index $idx$}
@@ -31,7 +34,7 @@
       \Comment{filter out the pattern rows not in $nlist$}
       $F \gets$ FilterPattern($P,nlist$)\;
       \Comment{check if a valid strategy can be extracted from the filtered pattern}
-      $S \gets$GetValidStrategy(F)\;
+      $S \gets$GetValidStrategy($F,T,idx$)\;
       \If{$S\neq\ $\Null}{
         \Return $S$\;
       }
@@ -40,10 +43,10 @@
   \Return \Null
 \end{algorithm}
 
-\begin{algorithm}[h]
+\begin{algorithm}[H]
   \DontPrintSemicolon
   \caption{\rmfamily FilterPattern}\label{alg:filter}
-  \KwIn{pattern $P$=\KwMat{i,j} ($i\in\{0,N-1\}$, $j\in\{0,T-1\}$); neighbor index list $nlist=$\KwList{i_0,\dots,i_{r-1}} ($r\leq N$)} 
+  \KwIn{pattern $P$=\KwMat{i,j} ($i\in\{0,N-1\}$, $j\in\{0,T-1\}$); neighbor index list $nlist=$ \KwList{$i_0,\dots,i_{r-1}$} ($r\leq N$) } 
   \KwOut{filtred pattern $F$=\KwMat{k,l} ($k\in\{0,r-1\}$, $l\in\{0,T-1\}$)}
   $N \gets$ number of rows of $P$\;
   $T \gets$ number of columns of $P$\;
@@ -59,7 +62,7 @@
   \Return $F$
 \end{algorithm}
 
-\begin{algorithm}[h]
+\begin{algorithm}[H]
   \DontPrintSemicolon
   \caption{\rmfamily GetValidStrategy}\label{alg:validstr}
   \KwIn{pattern $F$; period of the pattern $T$; agent index $idx$}
@@ -81,4 +84,33 @@
   \Return S
 \end{algorithm}
 
+
+\section{Corrector}
+
+\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \caption{\rmfamily CorrectState}\label{alg:}
+  \KwIn{$in\_cycle$; $is\_down$, $ones$, $curr\_ones$}
+  \KwOut{}
+  \Comment{If the agent belongs to the cycle an is in down state...}
+  \If{$in\_cycle$ \And $is\_down$}{
+    \Comment{If the current number of ones in the cycle is less than the expected and the agent's next action is '0'...}
+    \uIf{$curr\_ones<ones$ \And $action==0$}{
+      \Comment{with 0.5\% probability}
+      $rnd$=Rnd()\;
+      \If{$rnd<0.5$}{
+        $action=1$
+      }
+    }
+    \Comment{If the current number of ones in the cycle is greater than the expected and the agent's next action is '1'...}
+    \uElseIf{$curr\_ones>ones$ \And $action==1$}{
+      \Comment{with 0.5\% probability}
+      $rnd$=Rnd()\;
+      \If{$rnd<0.5$}{
+        $action=0$
+      }
+    }
+  }
+\end{algorithm}
+  
 \end{document}
