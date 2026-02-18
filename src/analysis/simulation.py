@@ -6,7 +6,7 @@ from config.config import PATHS
 
 class Agent:
     def __init__(self, id: int, strategy: dict, neighbors: list[int], state: str = '0', 
-                 cycle: int = -1, ones_in_cycle: int = 0):
+                 cycle: int = -1, ones_in_cycle: int = 0, random_thresh: float = 0.5):
         self.id = id
         self.strategy = strategy
         self.neighbors = neighbors
@@ -15,7 +15,7 @@ class Agent:
         self.ones_in_cycle = ones_in_cycle
         self.is_down = False
         self.correct = False
-
+        self.random_thresh = random_thresh
     def back_online(self):
         print(f"Agent {self.id} back online.")
         self.is_down = False
@@ -45,7 +45,7 @@ class Agent:
             
     def correct_state(self, state_status: int, rng: np.random.Generator = None) -> bool:
         if (state_status-self.ones_in_cycle < 0) and self.state == '0':
-            if(rng.choice(['0', '1']) == '1'):
+            if(rng.random() < self.random_thresh):
                 self.state = '1'
                 print(f"Agent {self.id} correcting state from '0' to '1'")
                 return True
@@ -53,7 +53,7 @@ class Agent:
                 print(f"Agent {self.id} no correction performed.")
                 return False
         elif (state_status-self.ones_in_cycle > 0) and self.state == '1':
-            if(rng.choice(['0', '1']) == '1'):
+            if(rng.random() < self.random_thresh):
                 self.state = '0'
                 print(f"Agent {self.id} correcting state from '1' to '0'")
                 return True
@@ -111,7 +111,9 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
              down_times: list[int] = None, 
              down_lapses: list[int] = None, 
              down_agents: list[int] = None,
-             seed: int = 54) -> list[str]:
+             random_thresh: float = 0.5,
+             seed: int = 54
+             ) -> list[str]:
     #For reproducibility
     rng = np.random.default_rng(seed)
 
@@ -136,7 +138,8 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
             neighbors=agent_info[str(i)]['neigh'],
             state=prev_state[i],
             cycle=agent_info[str(i)]['cycle'],
-            ones_in_cycle=agent_info[str(i)]['ones in cycle']
+            ones_in_cycle=agent_info[str(i)]['ones in cycle'],
+            random_thresh=random_thresh
         )
         agents.append(agent)
         #print(str(agent))
@@ -182,7 +185,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         pattern.append(state)
         prev_state = state
 
-        print(f"state: {state}\nstate_status: {ones_in_cycle}")
+        print(f"step: {step}\nstate: {state}\nstate_status: {ones_in_cycle}")
         print()
 
     return pattern
