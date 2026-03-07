@@ -12,12 +12,14 @@ def multi_cpu_round_robin(processes, quantum, num_cpus):
 
     time = 0
     completed = 0
+    idx = 0
     while completed < n:
         active_processes.clear()  # Clear active processes at the start of each time unit
-        idx = 0
-        while idx < n and processes[idx]['arrival'] <= time:
+        cnt = 0
+        while cnt < num_cpus and processes[idx]['arrival'] <= time:
             ready_queue.append(processes[idx])
-            idx += 1
+            idx = (idx+1) % n
+            cnt += 1
         
         for i in range(num_cpus):
             if cpu_free_at[i] <= time and ready_queue:
@@ -33,7 +35,6 @@ def multi_cpu_round_robin(processes, quantum, num_cpus):
                     p['arrival'] = time + execute_time
         
         active_str = ''.join('1' if p['id'] in active_processes else '0' for p in processes)
-        #print(f"Time: {time}, CPU Free At: {cpu_free_at}, Active: {active_str}, Ready Queue: {[p['id'] for p in ready_queue]}")
         print(f"Time: {time}, CPU Free At: {cpu_free_at}, Active: {active_str}")
         time += 1  # Increment time
 
