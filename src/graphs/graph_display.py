@@ -10,20 +10,27 @@ from typing import Dict, List, Tuple, Optional
 from config.config import PATHS
 
 
+def get_num(string: str) -> int:
+    """Extract number from a string."""
+    return int(''.join(filter(str.isdigit, string)))
+
+
 class GraphVisualizer:
     """Class to read graph data and generate interactive HTML visualizations."""
 
-    def __init__(self, num_nodes: int, num_steps: int) -> None:
+    def __init__(self, num_nodes: int, num_steps: int, mode: str) -> None:
         """
         Initialize the GraphVisualizer.
         
         Args:
             num_nodes: Number of nodes (agents) in the graph
             num_steps: Number of available spots in the system
+            mode: Mode of operation. It can be 'pattern' for pattern-based visualization or 'id' for numerical ID-based visualization.
         """
         self.struct = None
         self.N = num_nodes
         self.s = num_steps
+        self.mode = mode
 
         self.graph_data_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}.json"
         self.output_html_path = PATHS['html'] / f"graph_N{self.N:d}s{self.s:d}.html"
@@ -44,15 +51,23 @@ class GraphVisualizer:
         """Convert binary string to decimal."""
         return int(bin_str, 2)
     
-    def get_color(self, bin_str: str) -> str:
+    def get_color_pat(self, bin_str: str) -> str:
         """Get color based on binary string."""
         decimal = self.bin_to_decimal(bin_str)
         return self.color_names[decimal % len(self.color_names)]
     
-    def get_shape(self, bin_str: str) -> str:
+    def get_shape_pat(self, bin_str: str) -> str:
         """Get shape based on binary string."""
         decimal = self.bin_to_decimal(bin_str)
         return self.shape_names[decimal % len(self.shape_names)]
+    
+    def get_color_id(self, num: int) -> str:
+        """Get color based on binary string."""
+        return self.color_names[num % len(self.color_names)]
+    
+    def get_shape_id(self, num: int) -> str:
+        """Get shape based on binary string."""
+        return self.shape_names[num % len(self.shape_names)]
     
     def build_graph_data(self, pattern_index: int = 0) -> Tuple[List[Tuple[str, str]], Dict[str, str], Dict[str, str], Dict[str, str]]:
         """
@@ -68,12 +83,12 @@ class GraphVisualizer:
         e_colors = {}
         n_colors = {}
         n_shapes = {}
-        
+
         for n1 in self.struct[pattern_index]:
             # Set node colors and shapes based on pattern
             pattern_str = ''.join(i for i in self.struct[pattern_index][n1]["pattern"])
-            n_colors[n1] = self.get_color(pattern_str)
-            n_shapes[n1] = self.get_shape(pattern_str)
+            n_colors[n1] = self.get_color_pat(pattern_str)
+            n_shapes[n1] = self.get_shape_pat(pattern_str)
             
             # Build edges
             for n2 in self.struct[pattern_index][n1]["neigh"]:
@@ -97,6 +112,49 @@ class GraphVisualizer:
         
         return edges, e_colors, n_colors, n_shapes
     
+    def build_wgraph_data(self, pattern_index: int = 0) -> Tuple[List[Tuple[str, str]], Dict[str, str], Dict[str, str], Dict[str, str]]:
+        """
+        Build graph data structures for visualization.
+        
+        Args:
+            pattern_index: Index of the pattern to visualize
+            
+        Returns:
+            Tuple of (edges, edge_colors, node_colors, node_shapes)
+        """
+        edges = []
+        e_colors = {}
+        n_colors = {}
+        n_shapes = {}
+        
+        for n1 in self.struct[pattern_index]:
+            # Set node colors and shapes based on numerical ID
+            pr = get_num(n1)
+            n_colors[n1] = self.get_color_id(pr)
+            n_shapes[n1] = self.get_shape_id(pr)
+            
+            # Build edges
+            for n2 in self.struct[pattern_index][n1]["neigh"]:
+                if len(self.struct[pattern_index][n1]["strat"]) > 1:
+                    edges.append((n2, n1))
+                    #print(edges)
+                    
+                    # Determine edge color based on strategy
+                    copy_strat = False
+                    if len(self.struct[pattern_index][n1]["strat"]) == 2:
+                        copy_strat = (
+                            self.struct[pattern_index][n1]["strat"]['0'] == '0' and
+                            self.struct[pattern_index][n1]["strat"]['1'] == '1'
+                        )
+                        if copy_strat:
+                            e_colors[f'{n2}-{n1}'] = 'darkturquoise'
+                        else:
+                            e_colors[f'{n2}-{n1}'] = 'black'
+                    else:
+                        e_colors[f'{n2}-{n1}'] = 'black'
+        
+        return edges, e_colors, n_colors, n_shapes
+
     def create_network(self, pattern_index: int,
                        edges: List[Tuple[str, str]], 
                       e_colors: Dict[str, str], 
@@ -161,7 +219,13 @@ class GraphVisualizer:
         num_nodes = len(self.struct[pattern_index])
         
         # Build graph data
-        edges, e_colors, n_colors, n_shapes = self.build_graph_data(pattern_index)
+        edges, e_colors, n_colors, n_shapes = [], {}, {}, {}
+        if self.mode == 'pattern':
+            edges, e_colors, n_colors, n_shapes = self.build_graph_data(pattern_index)
+        elif self.mode == 'id':
+            edges, e_colors, n_colors, n_shapes = self.build_wgraph_data(pattern_index)
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}. Use 'pattern' or 'id'.")
         
         # Create network using helper
         dnet = self.create_network(
