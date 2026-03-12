@@ -64,9 +64,9 @@ class PatternGenerator:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
-    def _swap_columns(self, i: int, j: int) -> None:
+    def _swap_columns(self, a: str, b: str) -> None:
         """Swap columns *i* and *j* in‑place inside ``self._pattern``."""
-        self._pattern[i], self._pattern[j] = self._pattern[j], self._pattern[i]
+        self._pattern[a], self._pattern[b] = self._pattern[b], self._pattern[a]
 
     def _swap_rows(self, i: int, j: int) -> None:
         """Swap entries *i* and *j* across every column (row permutation)."""
@@ -99,14 +99,14 @@ class PatternGenerator:
 
         # Step 2 – Convert to column‑centric representation, where each value is the pattern for an agent through time -------------
         self._pattern = {
-            col: [row[col] for row in rows] for col in range(self.N)
+            str(col)+'a': [row[col] for row in rows] for col in range(self.N)
         }
 
         # Step 3 – Optional permutations -------------------------------
         if self.permute_columns:
             for _ in range(self.rng.integers(0, self.N)):
-                a, b = self.rng.integers(0, self.N, size=2)
-                self._swap_columns(int(a), int(b))
+                a, b = self.rng.choice(list(self._pattern.keys()),2)#self.rng.integers(0, self.N, size=2)
+                self._swap_columns(a, b)
 
         if self.permute_rows:
             num_rows = len(rows)

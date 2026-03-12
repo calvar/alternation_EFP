@@ -37,8 +37,11 @@ class StrategyGraphBuilder:
         )
 
         # Every agent initially observes *all* others; adapt as needed.
-        self._neighbour_mats: List[np.ndarray] = [
-            np.tile(np.arange(self.N), (self.N, 1)) for _ in self.patterns
+        #self._neighbour_mats: List[np.ndarray] = [
+        #    np.tile(np.arange(self.N), (self.N, 1)) for _ in self.patterns
+        #]
+        self._neighbour_mats: List[Dict[str, np.ndarray]] = [
+            {i: np.array([j for j in range(self.N) if j != i]) for i in self.patterns[k]} for k in range(len(self.patterns))
         ]
         self._graphs: Optional[List[Dict[int, Dict[str, object]]]] = None
 
@@ -60,14 +63,14 @@ class StrategyGraphBuilder:
         graphs: List[Dict[int, Dict[str, object]]] = []
         for pat, neigh_mat in zip(self.patterns, self._neighbour_mats):
             pattern_graph: Dict[int, Dict[str, object]] = {}
-            for agent_idx in range(self.N):
+            for agent_idx in pat.keys():#range(self.N):
                 strat_tuple = self._get_strategy(
                     pattern=pat,
                     idx=agent_idx,
                     neighbour_mat=neigh_mat,
                     shuffle=shuffle,
                 )
-
+                #print(strat_tuple)
                 pattern_graph[agent_idx] = {
                     "pattern": pat[str(agent_idx)],
                     "neigh":   strat_tuple[0] if strat_tuple else None,
@@ -88,16 +91,16 @@ class StrategyGraphBuilder:
     @staticmethod
     def _filter_pattern(
         pattern: Dict[str, str],
-        mask: Sequence[bool]
+        mask: Dict[str, bool]
     ) -> Dict[str, str]:
         """Return a view of *pattern* restricted to columns where *mask* is True."""
-        return {k: v for k, v in pattern.items() if mask[int(k)]}
+        return {k: v for k, v in pattern.items() if mask[k]}
 
     def _get_strategy(
         self,
         pattern: Dict[str, str],
-        idx: int,
-        neighbour_mat: np.ndarray,
+        idx: str,
+        neighbour_mat: Dict[str, np.ndarray],
         shuffle: bool = True,
     ) -> Optional[Tuple[Tuple[str, ...], Dict[str, str], Dict[str, int]]]:
         """
@@ -105,7 +108,7 @@ class StrategyGraphBuilder:
         agent’s next action.  Returns ``None`` if no stable mapping exists.
         """
         neighbours = neighbour_mat[idx].tolist()
-        T = len(pattern[str(idx)])
+        T = len(pattern[idx])
 
         for subset_size in range(1, len(neighbours) + 1):
             combos = list(combinations(neighbours, subset_size)) # list of neighbors to pay attention to
@@ -114,16 +117,24 @@ class StrategyGraphBuilder:
             
             for cols in combos:
                 cols_sorted = sorted(cols)
-                mask = [i in cols_sorted for i in range(self.N)]
+                keys_sorted = [list(pattern.keys())[i] for i in cols_sorted]
+                #mask = [i in cols_sorted for i in range(self.N)]
+                mask = {k: (i in cols_sorted) for i, k in enumerate(pattern.keys())}
                 filtered = self._filter_pattern(pattern, mask)
+                #print(pattern)
+                #print(mask)
+                #print(keys_sorted)
+                #print(filtered)
 
                 mapping: Dict[str, str] = {} # rules: if you see key -> do target
                 counts: Dict[str, int] = {}  # how many times each key was observed
                 consistent = True     # check if a single key maps to a single target
 
                 for t in range(T):
-                    key = "".join(filtered[str(c)][t] for c in cols_sorted)
-                    target = pattern[str(idx)][(t + 1) % T]
+                    #key = "".join(filtered[str(c)][t] for c in cols_sorted)
+                    key = ",".join(filtered[k][t] for k in keys_sorted)
+                    #print(key) 
+                    target = pattern[idx][(t + 1) % T]
 
                     if key in mapping:
                         if mapping[key] != target:
@@ -139,7 +150,7 @@ class StrategyGraphBuilder:
 
                 if len(set(mapping.values())) == 1:           # always-do-X rule
                     return (), {"any": next(iter(mapping.values()))}, {"any": 1}
-                return tuple(map(str, cols_sorted)), mapping, counts
+                return tuple(map(str, keys_sorted)), mapping, counts
 
         return None  # no deterministic strategy found
 

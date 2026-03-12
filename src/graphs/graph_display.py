@@ -76,16 +76,17 @@ class GraphVisualizer:
             n_shapes[n1] = self.get_shape(pattern_str)
             
             # Build edges
-            for n2 in self.struct[pattern_index][str(n1)]["neigh"]:
-                if len(self.struct[pattern_index][str(n1)]["strat"]) > 1:
+            for n2 in self.struct[pattern_index][n1]["neigh"]:
+                if len(self.struct[pattern_index][n1]["strat"]) > 1:
                     edges.append((n2, n1))
+                    #print(edges)
                     
                     # Determine edge color based on strategy
                     copy_strat = False
-                    if len(self.struct[pattern_index][str(n1)]["strat"]) == 2:
+                    if len(self.struct[pattern_index][n1]["strat"]) == 2:
                         copy_strat = (
-                            self.struct[pattern_index][str(n1)]["strat"]['0'] == '0' and
-                            self.struct[pattern_index][str(n1)]["strat"]['1'] == '1'
+                            self.struct[pattern_index][n1]["strat"]['0'] == '0' and
+                            self.struct[pattern_index][n1]["strat"]['1'] == '1'
                         )
                         if copy_strat:
                             e_colors[f'{n2}-{n1}'] = 'darkturquoise'
@@ -96,7 +97,8 @@ class GraphVisualizer:
         
         return edges, e_colors, n_colors, n_shapes
     
-    def create_network(self, edges: List[Tuple[str, str]], 
+    def create_network(self, pattern_index: int,
+                       edges: List[Tuple[str, str]], 
                       e_colors: Dict[str, str], 
                       n_colors: Dict[str, str], 
                       n_shapes: Dict[str, str],
@@ -118,7 +120,7 @@ class GraphVisualizer:
         """
         # Create directed graph
         DG = nx.DiGraph()
-        DG.add_nodes_from([str(i) for i in range(num_nodes)])
+        DG.add_nodes_from([i for i in self.struct[pattern_index].keys()])
         DG.add_edges_from(edges)
         for node in DG.nodes:
             DG.nodes[node]['color'] = n_colors[node]
@@ -163,6 +165,7 @@ class GraphVisualizer:
         
         # Create network using helper
         dnet = self.create_network(
+            pattern_index=pattern_index,
             edges=edges,
             e_colors=e_colors,
             n_colors=n_colors,
