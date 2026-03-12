@@ -94,11 +94,12 @@ class CycleAnalyzer:
             raise ValueError("No graph data loaded. Call load_graph_data() first.")
         
         # Augment each pattern
+        print(self.struct)
         for pattern_idx in range(len(self.struct)):
             self.cycles.append(self.detect_cycles(Npat=pattern_idx))
-            for i in range(self.N):
-                self.struct[pattern_idx][str(i)]['cycle'] = -1
-                self.struct[pattern_idx][str(i)]['ones in cycle'] = 0
+            for i in self.struct[pattern_idx].keys():
+                self.struct[pattern_idx][i]['cycle'] = -1
+                self.struct[pattern_idx][i]['ones in cycle'] = 0
                 
                 # Find which cycle this node belongs to
                 for c in range(len(self.cycles[pattern_idx])):
@@ -124,6 +125,7 @@ class CycleAnalyzer:
         Run the complete pipeline: load, detect cycles, augment, and save.
         """
         self.load_graph_data()
+        #print(self.struct)
         self.augment_struct_with_cycles()
         self.save_graph_data()
         for pattern_idx in range(len(self.struct)):
