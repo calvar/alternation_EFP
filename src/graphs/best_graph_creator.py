@@ -11,8 +11,8 @@ from config.config import PATHS
 class EquitableAgent:
     """Represents an agent in the equitable graph with pattern and strategy information."""
     
-    def __init__(self, id: int) -> None:
-        self.id: int = id
+    def __init__(self, id: str) -> None:
+        self.id: str = id
         self.pattern: List[str] = []
         self.neigh: List[str] = []
         self.strat: Dict[str, str] = {"0": "0", "1": "1"}
@@ -62,7 +62,7 @@ class GraphCreator:
         
     def create_agents(self) -> None:
         """Create all agents for the graph."""
-        self.agents = [EquitableAgent(id=i) for i in range(self.N)]
+        self.agents = [EquitableAgent(id=str(i)+"a") for i in range(self.N)]
         self.twin_groups = [self.agents[i:i+self.twin_g_size] 
                            for i in range(0, self.N, self.twin_g_size)]
     
