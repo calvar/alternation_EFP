@@ -50,7 +50,7 @@ class GraphCreator:
         """
         self.N = N
         self.s = s
-        self.agents: List[EquitableAgent] = []
+        self.agents: Dict[str, EquitableAgent] = {}
         self.gcd = np.gcd(N, s)
         self.n = N // self.gcd  # cycle length
         self.b = s // self.gcd  # ones in cycle
@@ -62,8 +62,8 @@ class GraphCreator:
         
     def create_agents(self) -> None:
         """Create all agents for the graph."""
-        self.agents = [EquitableAgent(id=str(i)+"a") for i in range(self.N)]
-        self.twin_groups = [self.agents[i:i+self.twin_g_size] 
+        self.agents = {str(i)+"a": EquitableAgent(id=str(i)+"a") for i in range(self.N)}
+        self.twin_groups = [list(self.agents.values())[i:i+self.twin_g_size] 
                            for i in range(0, self.N, self.twin_g_size)]
     
     def set_neighbors(self) -> None:
@@ -91,7 +91,7 @@ class GraphCreator:
         """Generate patterns for all agents based on graph structure."""
         # Initial state in cycle
         ones = self.b
-        for i in range(self.N):
+        for i in self.agents.keys():
             if self.agents[i].cycle == 0:
                 if ones > 0:
                     self.agents[i].pattern.append('1')
@@ -107,13 +107,13 @@ class GraphCreator:
         
         # Simulate the rest of the period
         for t in range(1, self.n):
-            for a in self.agents:
-                a.pattern.append(self.agents[int(a.neigh[0])].pattern[t-1])
+            for a in self.agents.values():
+                a.pattern.append(self.agents[a.neigh[0]].pattern[t-1])
         
         # Input frequency
-        freq_1 = int(sum(map(int, self.agents[0].pattern)))
+        freq_1 = int(sum(map(int, self.agents['0a'].pattern)))
         freq_0 = int(self.n - freq_1)
-        for a in self.agents:
+        for a in self.agents.values():
             a.input_freq = {"0": freq_0, "1": freq_1}
     
     def build_graph(self) -> None:
@@ -131,7 +131,7 @@ class GraphCreator:
             List containing a dictionary mapping agent IDs to their data.
         """
         struct: List[Dict[int, Dict[str, object]]] = [{}]
-        for a in self.agents:
+        for a in self.agents.values():
             struct[0][a.id] = a.to_dict()
         return struct
     
