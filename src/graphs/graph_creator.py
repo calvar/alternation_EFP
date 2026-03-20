@@ -58,10 +58,7 @@ class StrategyGraphBuilder:
         ''pattern'', ''neigh'', ''strat'', and ''input freq''.
         """
         if self._graphs is not None:
-            return self._graphs                               # already built
-
-
-        self._get_weights(0)
+            return self._graphs                               # already built               
         
 
         graphs: List[Dict[int, Dict[str, object]]] = []
@@ -93,10 +90,6 @@ class StrategyGraphBuilder:
     # ------------------------------------------------------------------ #
     #  Private helpers                                                   #
     # ------------------------------------------------------------------ #
-    def _get_weights(self, idx: int):
-        nums = [''.join(filter(str.isdigit, st)) for st in self.patterns[idx].keys()]
-        print(nums)
-        #### AQUÍ VOY!!!!!!!!!!!
 
     @staticmethod
     def _filter_pattern(
