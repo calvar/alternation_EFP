@@ -3,7 +3,7 @@ import numpy as np
 import string
 
 from pathlib import Path
-from typing import Dict, List, Sequence, Optional, Union
+from typing import Dict, List, Tuple, Optional, Union
 
 
 class WeightedPatternGenerator:
@@ -55,6 +55,7 @@ class WeightedPatternGenerator:
         self.permute_rows = permute_rows
         # Create a dedicated random generator for this instance
         self.rng = rng or np.random.default_rng()
+        #print("done initializing.")
     
     # ------------------------------------------------------------------
     # Private helpers
@@ -137,9 +138,7 @@ class WeightedPatternGenerator:
             sol[j][a], sol[k][a] = sol[k][a], sol[j][a]
         #print(sol)
 
-        # for d in D:
-        #    v = np.sum(sol == d)
-        #    print(f"Value {d}: {v}")
+        self.final_weights = {d: np.sum(sol == d) for d in D}
 
         # Step 4 - Convert to column‑centric representation, where each value is the pattern for an agent through time -------------
         rows = []
@@ -156,17 +155,21 @@ class WeightedPatternGenerator:
             for _ in range(self.rng.integers(0, len(D))):
                 a, b = self.rng.integers(0, len(D), size=2)
                 self.swap_columns(int(a), int(b), pattern)
+                self.final_weights[a], self.final_weights[b] = self.final_weights[b], self.final_weights[a]
 
         if self.permute_rows:
             num_rows = len(rows)
             for _ in range(self.rng.integers(0, num_rows)):
                 a, b = self.rng.integers(0, num_rows, size=2)
                 self.swap_rows(int(a), int(b), pattern)
+
+        #print("Final weights:", self.final_weights)
         
         # Step 6 - expand the pattern by creating a new row for each '1' in the original pattern, 
         # where the new row has a '1' in the same position and '0's elsewhere. This way, 
         # we get a pattern where each node is active in exactly one turn, and the number of 
         # rows equals the total number of active turns across all processes.
+        #print(pattern)
         num_to_letter_map = dict(zip(range(0,26), string.ascii_lowercase))
         expanded = {}
         for i in pattern:
@@ -190,7 +193,7 @@ class WeightedPatternGenerator:
         """
         return [self.generate() for _ in range(self.num_patterns)]
     
-    def save(self, filepath: Union[str, Path]) -> None:
+    def save(self, filepath: Union[str, Path]) -> Tuple[int, List[Dict[int, List[str]]]]:
         """Save a pattern dictionary to *filepath* in JSON format.
 
         By default, the method saves the most recently generated pattern.
@@ -198,12 +201,14 @@ class WeightedPatternGenerator:
         be supplied instead.
         """
         patterns = self.generate_many()
+        Neff = len(patterns[0])
 
         file = Path(filepath)
         file.parent.mkdir(parents=True, exist_ok=True)
 
         with file.open("w") as f:
             json.dump(patterns, f)
+        return Neff, patterns
     
     # ------------------------------------------------------------------
     # Convenience accessors

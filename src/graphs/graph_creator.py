@@ -71,6 +71,8 @@ class StrategyGraphBuilder:
                     neighbour_mat=neigh_mat,
                     shuffle=shuffle,
                 )
+                if strat_tuple is None:
+                    print(f"Error: No deterministic strategy found for agent {agent_idx} in pattern {pat}.")
                 #print(strat_tuple)
                 pattern_graph[agent_idx] = {
                     "pattern": pat[str(agent_idx)],

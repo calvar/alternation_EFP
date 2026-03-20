@@ -62,19 +62,19 @@ class Agent:
         self.correct = True
 
     def take_action(self, key: str, cycle_status: list[int], rng: np.random.Generator = None):
-        for node in self.nodes:
-            if key in node.strategy:
-                node.state = node.strategy[key]
+        for i in range(self.weight):
+            if key[i] in self.nodes[i].strategy:
+                self.nodes[i].state = self.nodes[i].strategy[key[i]]
             else:
-                print(f"Agent {self.id}, node {node.id}: key '{key}' not found")
-                node.state = rng.choice(['0', '1'])
+                print(f"Agent {self.id}, node {self.nodes[i].id}: key '{key}' not found")
+                self.nodes[i].state = rng.choice(['0', '1'])
 
         if self.is_down:
             print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...")
             state_str = self.get_state_str()
             print(f"Should be '{state_str}' ",end=' ')
             nid = rng.choice(range(self.weight))
-            for i in self.weight:
+            for i in range(self.weight):
                 if i == nid:
                     self.nodes[i].state = rng.choice(['0', '1'])
                 else:
@@ -211,7 +211,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     #print(prev_state)
     if init_cond:
         prev_state = init_cond
-    #print(prev_state)
+        #print(prev_state)
 
     ## Load agents---
     num_cycles = 0
@@ -231,7 +231,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         print(f"Agent {a.id} weight: {a.weight} cycles: {a.get_ones_in_cycles()}")
 
     prev_node_state = get_state_from_nodes(agents)
-    #print(get_state_from_agents(agents), get_state_from_nodes(agents))
+    print(get_state_from_agents(agents), get_state_from_nodes(agents))
     #print(f"num_cycles: {num_cycles}")
 
     ## Print info about agents that will go down---
@@ -247,6 +247,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     pattern = [prev_node_state]
     for step in range(Nsteps):
         if down_agents is not None:
+            print("Down agents:", [da for da in down_agents if agents[int(da)].is_down])
             for i in range(len(down_agents)):            
                 if step == down_times[i]:
                     agents[int(down_agents[i])].is_down = True
@@ -254,11 +255,12 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
                     agents[int(down_agents[i])].back_online()
 
         for agent in agents:
+            keys = []
             for node in agent.nodes:
                 key = ''.join(prev_node_state[int(id_nodes[i])] for i in node.neighbors)
-                #print(key)
+                keys.append(key)
 
-            agent.take_action(key, ones_in_cycle, rng)
+            agent.take_action(keys, ones_in_cycle, rng)
 
         ones_in_cycle = ones(agents, num_cycles)
 
