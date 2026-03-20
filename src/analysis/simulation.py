@@ -1,61 +1,120 @@
 import json
+import string
 import numpy as np
 from config.config import PATHS
 
 
 
-class Agent:
-    def __init__(self, id: int, strategy: dict, neighbors: list[int], state: str = '0', 
-                 cycle: int = -1, ones_in_cycle: int = 0, random_thresh: float = 0.5):
+class Node:
+    def __init__(self, id: str, strategy: dict, neighbors: list[str], state: str = '0', 
+                 cycle: int = -1, ones_in_cycle: int = 0):
         self.id = id
         self.strategy = strategy
         self.neighbors = neighbors
         self.state = state
         self.cycle = cycle
         self.ones_in_cycle = ones_in_cycle
+
+    def __str__(self):
+        return f"id:{self.id}\nstrategy:{self.strategy}\nneighbors:{self.neighbors}\nstate:{self.state}"
+
+class Agent:
+    def __init__(self, id: str, node_data: dict, state: str = '0', random_thresh: float = 0.5):
+        self.id = id
+        self.weight = len(node_data)
+        self.state = state
         self.is_down = False
         self.correct = False
         self.random_thresh = random_thresh
+        #print(node_data)
+        self.nodes = []
+        for nd in node_data:
+            alpha = ''.join(filter(str.isalpha,nd))
+            node = Node(
+                id=nd,
+                strategy=node_data[nd]['strat'],
+                neighbors=node_data[nd]['neigh'],
+                state=state if alpha == 'a' else '0',
+                cycle=node_data[nd]['cycle'],
+                ones_in_cycle=node_data[nd]['ones in cycle']
+            )
+            self.nodes.append(node)
+
+    def get_state(self) -> str:
+        state = 0
+        for node in self.nodes:
+            state += int(node.state)
+        self.state = str(state)
+        return self.state
+    
+    def get_state_str(self) -> str:
+        state = ''
+        for node in self.nodes:
+            state += node.state
+        return state
+
+    def get_ones_in_cycles(self) -> dict[int:int]:
+        return {node.cycle: node.ones_in_cycle for node in self.nodes}
+
     def back_online(self):
         print(f"Agent {self.id} back online.")
         self.is_down = False
         self.correct = True
 
     def take_action(self, key: str, cycle_status: list[int], rng: np.random.Generator = None):
-        if key in self.strategy:
-            self.state = self.strategy[key]
-        else:
-            print(f"Agent {self.id}: key '{key}' not found")
-            self.state = rng.choice(['0', '1'])
+        for node in self.nodes:
+            if key in node.strategy:
+                node.state = node.strategy[key]
+            else:
+                print(f"Agent {self.id}, node {node.id}: key '{key}' not found")
+                node.state = rng.choice(['0', '1'])
 
         if self.is_down:
-            print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...\nShould be '{self.state}' ",end=' ')
-            self.state = rng.choice(['0', '1'])
-            print(f"but is now '{self.state}'")
+            print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...")
+            state_str = self.get_state_str()
+            print(f"Should be '{state_str}' ",end=' ')
+            nid = rng.choice(range(self.weight))
+            for i in self.weight:
+                if i == nid:
+                    self.nodes[i].state = rng.choice(['0', '1'])
+                else:
+                    self.nodes[i].state = '0'
+            state_str = self.get_state_str()
+            print(f"but is now '{state_str}'")
         else:
             # After the node goes back online, the system should correct
             # itself.
-            if self.cycle >= 0:
+            nid = rng.choice(range(self.weight))
+            if self.nodes[nid].cycle >= 0:
                 if self.correct:
-                    if (cycle_status[self.cycle]-self.ones_in_cycle != 0):
-                        performed_correction = self.correct_state(cycle_status[self.cycle], rng)
+                    if (cycle_status[self.nodes[nid].cycle]-self.nodes[nid].ones_in_cycle != 0):
+                        performed_correction = self.correct_state(cycle_status[self.nodes[nid].cycle], nid, rng)
                     else:
                         self.correct = False  
         
             
-    def correct_state(self, state_status: int, rng: np.random.Generator = None) -> bool:
-        if (state_status-self.ones_in_cycle < 0) and self.state == '0':
+    def correct_state(self, state_status: int, nid: int, rng: np.random.Generator = None) -> bool:
+        if (state_status-self.nodes[nid].ones_in_cycle < 0) and self.get_state() == '0':
             if(rng.random() < self.random_thresh):
-                self.state = '1'
-                print(f"Agent {self.id} correcting state from '0' to '1'")
+                prev_state = self.get_state_str()
+                for i in range(self.weight):
+                    if i == nid:
+                        self.nodes[i].state = '1'
+                    else:
+                        self.nodes[i].state = '0'
+                curr_state = self.get_state_str()
+                print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
                 return True
             else:
                 print(f"Agent {self.id} no correction performed.")
                 return False
-        elif (state_status-self.ones_in_cycle > 0) and self.state == '1':
+        elif (state_status-self.nodes[nid].ones_in_cycle > 0) and self.get_state() == '1':
             if(rng.random() < self.random_thresh):
-                self.state = '0'
-                print(f"Agent {self.id} correcting state from '1' to '0'")
+                prev_state = self.get_state_str()
+                for i in range(self.weight):
+                    self.nodes[i].state = '0'
+                curr_state = self.get_state_str()
+                print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
                 return True
             else:
                 print(f"Agent {self.id} no correction performed.")
@@ -63,9 +122,6 @@ class Agent:
         else:
             print(f"Agent {self.id} no correction performed.")
             return False
-
-    def __str__(self):
-        return f"id:{self.id}\nstrategy:{self.strategy}\nneighbors:{self.neighbors}\nstate:{self.state}"
 
 
 def load_graph_data(n: int, s: int) -> dict:
@@ -88,29 +144,51 @@ def load_graph_data(n: int, s: int) -> dict:
     return data
 
 def get_state(agent_info: dict, t: int) -> str:
-    ini_st = ''.join(agent_info[i]['pattern'][t] for i in agent_info)
-    return ini_st
+    total_state = ''
+    for a in agent_info:
+        state = 0
+        for node in agent_info[a]:
+            #print(agent_info[a][node])
+            state = state + int(agent_info[a][node]['pattern'][t])
+        total_state += str(state)
+    return total_state
+
+def get_node_state(agent_info: dict, t: int) -> dict:
+    total_node_state = ''
+    for a  in agent_info:
+        for node in agent_info[a]:
+            total_node_state += agent_info[a][node]['pattern'][t]
+    return total_node_state
 
 def get_state_from_agents(agents: list[Agent]) -> str:
-    return ''.join(agent.state for agent in agents)
+    return ''.join(agent.get_state() for agent in agents)
 
-def print_pattern(agent_info: dict) -> None:
-    for t in range(len(agent_info['0']['pattern'])):
-        state = get_state(agent_info, t)
-        print(state)
+def get_state_from_nodes(agents: list[Agent]) -> str:
+    state = ''
+    for agent in agents:
+        for node in agent.nodes:
+            state += node.state
+    return state
+
+#def print_pattern(agent_info: dict) -> None:
+#    for t in range(len(agent_info['0']['pattern'])):
+#        state = get_state(agent_info, t)
+#        print(state)
 
 def ones(agents: list[Agent], num_cycles: int) -> list[int]:
     ones_in_cycle = [0 for _ in range(num_cycles)]
     for agent in agents:
-        if agent.cycle >= 0 and agent.state == '1':
-            ones_in_cycle[agent.cycle] += 1
+        for node in agent.nodes:
+            #print(node.cycle, node.state)
+            if node.cycle >= 0 and node.state == '1':
+                ones_in_cycle[node.cycle] += 1
     return ones_in_cycle
 
 def simulate(n: int, s: int, idx: int, Nsteps: int, 
              init_cond: str = None,
              down_times: list[int] = None, 
-             down_lapses: list[int] = None, 
-             down_agents: list[int] = None,
+             down_lapses: list[int] = None,
+             down_agents: list[str] = None,
              random_thresh: float = 0.5,
              seed: int = 54
              ) -> list[str]:
@@ -119,11 +197,18 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
 
     data = load_graph_data(n, s)
     #print(data)
-    agent_info = data[idx]
-    #print_pattern(agent_info)
+    agent_info = {}
+    for node_id in data[idx]:
+        agent_id = "".join(filter(str.isdigit,node_id))
+        agent_info[agent_id] = agent_info.get(agent_id,{}) | {node_id: data[idx][node_id]}
+    #print(agent_info) 
+    
+    node_ids = [j for i in agent_info for j in agent_info[i]]
+    id_nodes = {v: k for k, v in enumerate(node_ids)}
     
     ## Initial state---
     prev_state = get_state(agent_info, 0)
+    #print(prev_state)
     if init_cond:
         prev_state = init_cond
     #print(prev_state)
@@ -131,47 +216,49 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     ## Load agents---
     num_cycles = 0
     agents = []
-    for i in range(len(agent_info)):
+    for i in agent_info:
         agent = Agent(
             id=i,
-            strategy=agent_info[str(i)]['strat'],
-            neighbors=agent_info[str(i)]['neigh'],
-            state=prev_state[i],
-            cycle=agent_info[str(i)]['cycle'],
-            ones_in_cycle=agent_info[str(i)]['ones in cycle'],
+            node_data=agent_info[i],
+            state=prev_state[int(i)],
             random_thresh=random_thresh
         )
         agents.append(agent)
         #print(str(agent))
-        num_cycles = max(num_cycles, agent.cycle + 1)
-    #print(get_state_from_agents(agents))
-    print(f"num_cycles: {num_cycles}")
+        num_cycles = max(num_cycles, max(agent.get_ones_in_cycles().keys()) + 1)
+
+    for a in agents:
+        print(f"Agent {a.id} weight: {a.weight} cycles: {a.get_ones_in_cycles()}")
+
+    prev_node_state = get_state_from_nodes(agents)
+    #print(get_state_from_agents(agents), get_state_from_nodes(agents))
+    #print(f"num_cycles: {num_cycles}")
 
     ## Print info about agents that will go down---
-    for da in down_agents:
-        print(f"da: {agents[da].cycle}")
+    #for da in down_agents:
+    #    print(f"da: {agents[int(da)].get_ones_in_cycles()}")
 
     ## Create list to store the number of ones in each cycle---
     ones_in_cycle = ones(agents, num_cycles)
+    #print(ones_in_cycle)
 
     ## Simulation loop---
-    pattern = [prev_state]
+    #print(down_agents)
+    pattern = [prev_node_state]
     for step in range(Nsteps):
         if down_agents is not None:
             for i in range(len(down_agents)):            
                 if step == down_times[i]:
-                    agents[down_agents[i]].is_down = True
+                    agents[int(down_agents[i])].is_down = True
                 if step == down_times[i] + down_lapses[i]:
-                    agents[down_agents[i]].back_online()
+                    agents[int(down_agents[i])].back_online()
 
-        state = ''
         for agent in agents:
-            key = ''.join(prev_state[int(i)] for i in agent.neighbors)
-            #print(key)
+            for node in agent.nodes:
+                key = ''.join(prev_node_state[int(id_nodes[i])] for i in node.neighbors)
+                #print(key)
 
             agent.take_action(key, ones_in_cycle, rng)
-
-            state += agent.state
 
         ones_in_cycle = ones(agents, num_cycles)
 
@@ -182,10 +269,11 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     #     else:
     #         state_status = 'high'
             
+        state = get_state_from_agents(agents)
         pattern.append(state)
-        prev_state = state
+        prev_node_state = get_state_from_nodes(agents)
 
-        print(f"step: {step}\nstate: {state}\nstate_status: {ones_in_cycle}")
+        print(f"step: {step}\nstate: {state} {prev_node_state}\nstate_status: {ones_in_cycle}")
         print()
 
     return pattern

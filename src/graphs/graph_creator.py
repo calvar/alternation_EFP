@@ -60,6 +60,10 @@ class StrategyGraphBuilder:
         if self._graphs is not None:
             return self._graphs                               # already built
 
+
+        self._get_weights(0)
+        
+
         graphs: List[Dict[int, Dict[str, object]]] = []
         for pat, neigh_mat in zip(self.patterns, self._neighbour_mats):
             pattern_graph: Dict[int, Dict[str, object]] = {}
@@ -79,6 +83,7 @@ class StrategyGraphBuilder:
                 }
             graphs.append(pattern_graph)
 
+        ##THE GRAPHS HAVE TO ENSURE A DISTANCE OF AT LEAST B BETWEEN NODES OF THE SAME AGENT!!!!!
         self._graphs = graphs
         
         graph_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}.json"
@@ -88,6 +93,11 @@ class StrategyGraphBuilder:
     # ------------------------------------------------------------------ #
     #  Private helpers                                                   #
     # ------------------------------------------------------------------ #
+    def _get_weights(self, idx: int):
+        nums = [''.join(filter(str.isdigit, st)) for st in self.patterns[idx].keys()]
+        print(nums)
+        #### AQUÍ VOY!!!!!!!!!!!
+
     @staticmethod
     def _filter_pattern(
         pattern: Dict[str, str],
