@@ -223,6 +223,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
             state=prev_state[int(i)],
             random_thresh=random_thresh
         )
+        print(agent.id,agent.nodes)
         agents.append(agent)
         #print(str(agent))
         num_cycles = max(num_cycles, max(agent.get_ones_in_cycles().keys()) + 1)

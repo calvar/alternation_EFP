@@ -87,8 +87,8 @@ class WeightedGraphCreator:
                 idx = self.graph.index(node.id)
                 idx_neigh = (idx - 1) % len(self.graph)
                 node.neigh.append(self.graph[idx_neigh])
-                node.pattern = ['1' if i == idx else '0' for i in range(len(self.graph))]
-                node.input_freq = {'0': len(self.graph)-1, '1': 1}
+                node.pattern = ['1' if i in [(idx+j)%len(self.graph) for j in range(self.s)] else '0' for i in range(len(self.graph))]
+                node.input_freq = {'0': len(self.graph)-self.s, '1': self.s}
                 node.cycle = 0
                 node.ones_in_cycle = self.s
                 #print(node)
@@ -210,28 +210,33 @@ class WeightedGraphCreator:
             if letters[-1] == 'r':
                 letters = letters[:-1]
             let_num = string.ascii_lowercase.index(letters[-1])
-            self.graph[i] = num+string.ascii_lowercase[let_num+1]+'r'
+            self.graph[i] = num+string.ascii_lowercase[let_num]+'r'
             
     def fill_extra_nodes(self):
+        count = 0
         for i in range(len(self.graph)):
-            if i%2 == 0:
+            if count%2 == 0:
                 if self.graph[i] == 'x':
                     #check left
                     j = (i-self.s) % len(self.graph)
                     self.check_change(i,j)
+                    count += 1
                 if self.graph[i] == 'x':
                     #check right
                     j = (i+self.s) % len(self.graph)
                     self.check_change(i,j)
+                    count += 1
             else:
                 if self.graph[i] == 'x':
                     #check right
                     j = (i+self.s) % len(self.graph)
                     self.check_change(i,j)
+                    count += 1
                 if self.graph[i] == 'x':
                     #check left
                     j = (i-self.s) % len(self.graph)
                     self.check_change(i,j)
+                    count += 1
 
     def insert_process(self, p):
         # Remove the 'r' tags from the process to be inserted and replace them with 'x'
