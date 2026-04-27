@@ -245,6 +245,7 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     ## Simulation loop---
     #print(down_agents)
     pattern = [prev_node_state]
+    ones_in_c = [ones_in_cycle]
     for step in range(Nsteps):
         if down_agents is not None:
             print("Down agents:", [da for da in down_agents if agents[int(da)].is_down])
@@ -274,8 +275,8 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         state = get_state_from_agents(agents)
         pattern.append(state)
         prev_node_state = get_state_from_nodes(agents)
-
+        ones_in_c.append(ones_in_cycle)
         print(f"step: {step}\nstate: {state} {prev_node_state}\nstate_status: {ones_in_cycle}")
         print()
 
-    return pattern
+    return pattern, ones_in_c
