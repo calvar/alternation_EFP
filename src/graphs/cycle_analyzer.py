@@ -16,18 +16,19 @@ class CycleAnalyzer:
     - Saves the modified data back to the JSON file
     """
 
-    def __init__(self, num_nodes: int, num_steps: int) -> None:
+    def __init__(self, num_nodes: int, num_steps: int, sufix: str = '') -> None:
         """
         Initialize the CycleAnalyzer with a graph data file.
         
         Args:
             num_nodes: Number of nodes (agents) in the graph
             num_steps: Number of available spots in the system
+            sufix: Suffix for the JSON file name (default: '')
         """
         self.N = num_nodes
         self.s = num_steps
 
-        self.graph_file_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}.json"
+        self.graph_file_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}{sufix}.json"
         self.struct = None
         self.cycles = []  # Placeholder for cycles list
 
@@ -36,7 +37,7 @@ class CycleAnalyzer:
         with open(self.graph_file_path, 'r') as f:
             self.struct = json.load(f)
 
-    def detect_cycles_and_radius(self, Npat: int = 0) -> List[List[str]]:
+    def detect_cycles_and_diameter(self, Npat: int = 0) -> List[List[str]]:
         """
         Detect simple cycles in the graph using NetworkX.
         
@@ -58,12 +59,12 @@ class CycleAnalyzer:
         # Detect simple cycles
         cycles = list(nx.simple_cycles(DG))
 
-        # Calculate radius of the graph
+        # Calculate diameter of the graph
         G = DG.to_undirected()
-        radius = None
+        diameter = None
         if len(G) > 0 and nx.is_connected(G):
-            radius = nx.radius(G)
-        return cycles, radius
+            diameter = nx.diameter(G)
+        return cycles, diameter
 
     def print_cycles(self, Npat: int = 0) -> None:
         """Print information about detected cycles."""
@@ -100,7 +101,7 @@ class CycleAnalyzer:
         # Augment each pattern
         print(self.struct)
         for pattern_idx in range(len(self.struct)):
-            cycles, radius = self.detect_cycles_and_radius(Npat=pattern_idx)
+            cycles, diameter = self.detect_cycles_and_diameter(Npat=pattern_idx)
             self.cycles.append(cycles)
             for i in self.struct[pattern_idx].keys():
                 self.struct[pattern_idx][i]['cycle'] = -1
@@ -116,8 +117,9 @@ class CycleAnalyzer:
                             for j in self.cycles[pattern_idx][c]
                         )
                         break
-                
-            self.struct[pattern_idx]['radius'] = -1 if radius is None else radius
+            max_cyc_sz = max(len(cycle) for cycle in self.cycles[pattern_idx]) if self.cycles[pattern_idx] else 0
+            self.struct[pattern_idx]['max_cycle_size'] = max_cyc_sz
+            self.struct[pattern_idx]['diameter'] = -1 if diameter is None else diameter
     
     def save_graph_data(self) -> None:
         """Save the augmented graph data back to the JSON file."""

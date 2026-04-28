@@ -18,7 +18,7 @@ def get_num(string: str) -> int:
 class GraphVisualizer:
     """Class to read graph data and generate interactive HTML visualizations."""
 
-    def __init__(self, num_nodes: int, num_steps: int, mode: str) -> None:
+    def __init__(self, num_nodes: int, num_steps: int, mode: str, sufix: str = '') -> None:
         """
         Initialize the GraphVisualizer.
         
@@ -26,14 +26,15 @@ class GraphVisualizer:
             num_nodes: Number of nodes (agents) in the graph
             num_steps: Number of available spots in the system
             mode: Mode of operation. It can be 'pattern' for pattern-based visualization or 'id' for numerical ID-based visualization.
+            sufix: Suffix for the JSON file name (default: '')
         """
         self.struct = None
         self.N = num_nodes
         self.s = num_steps
         self.mode = mode
 
-        self.graph_data_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}.json"
-        self.output_html_path = PATHS['html'] / f"graph_N{self.N:d}s{self.s:d}.html"
+        self.graph_data_path = PATHS['graphs'] / f"graph_data_N{self.N:d}s{self.s:d}{sufix}.json"
+        self.output_html_path = PATHS['html'] / f"graph_N{self.N:d}s{self.s:d}{sufix}.html"
         
         # Setup colors and shapes
         named_colors = mcolors.CSS4_COLORS
@@ -85,7 +86,7 @@ class GraphVisualizer:
         n_shapes = {}
 
         for n1 in self.struct[pattern_index]:
-            if n1 == 'radius':
+            if n1 == 'diameter' or n1 == 'max_cycle_size':
                 continue
             # Set node colors and shapes based on pattern
             pattern_str = ''.join(i for i in self.struct[pattern_index][n1]["pattern"])
@@ -180,7 +181,7 @@ class GraphVisualizer:
         """
         # Create directed graph
         DG = nx.DiGraph()
-        DG.add_nodes_from([i for i in self.struct[pattern_index].keys() if i != 'radius'])
+        DG.add_nodes_from([i for i in self.struct[pattern_index].keys() if i != 'diameter' and i != 'max_cycle_size'])
         DG.add_edges_from(edges)
         for node in DG.nodes:
             DG.nodes[node]['color'] = n_colors[node]

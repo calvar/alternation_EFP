@@ -148,7 +148,7 @@ class GraphCreator:
         """
         if output_path is None:
             output_path = (self.project_root / "data" / "graphs" / 
-                          f"graph_data_N{self.N:d}s{self.s:d}.json")
+                          f"graph_data_N{self.N:d}s{self.s:d}_o.json")
         
         struct = self.to_structure()
         with open(output_path, 'w') as json_file:
