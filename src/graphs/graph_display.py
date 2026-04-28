@@ -85,6 +85,8 @@ class GraphVisualizer:
         n_shapes = {}
 
         for n1 in self.struct[pattern_index]:
+            if n1 == 'radius':
+                continue
             # Set node colors and shapes based on pattern
             pattern_str = ''.join(i for i in self.struct[pattern_index][n1]["pattern"])
             n_colors[n1] = self.get_color_pat(pattern_str)
@@ -178,7 +180,7 @@ class GraphVisualizer:
         """
         # Create directed graph
         DG = nx.DiGraph()
-        DG.add_nodes_from([i for i in self.struct[pattern_index].keys()])
+        DG.add_nodes_from([i for i in self.struct[pattern_index].keys() if i != 'radius'])
         DG.add_edges_from(edges)
         for node in DG.nodes:
             DG.nodes[node]['color'] = n_colors[node]

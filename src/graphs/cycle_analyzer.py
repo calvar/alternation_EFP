@@ -36,7 +36,7 @@ class CycleAnalyzer:
         with open(self.graph_file_path, 'r') as f:
             self.struct = json.load(f)
 
-    def detect_cycles(self, Npat: int = 0) -> List[List[str]]:
+    def detect_cycles_and_radius(self, Npat: int = 0) -> List[List[str]]:
         """
         Detect simple cycles in the graph using NetworkX.
         
@@ -49,8 +49,6 @@ class CycleAnalyzer:
         
         # Build directed graph from the struct
         DG = nx.DiGraph()
-        DG.add_nodes_from([str(i) for i in range(self.N)])
-        
         # Add edges for nodes with strategies
         for n1 in self.struct[Npat]:
             for n2 in self.struct[Npat][str(n1)].get("neigh", []):
@@ -59,7 +57,13 @@ class CycleAnalyzer:
         
         # Detect simple cycles
         cycles = list(nx.simple_cycles(DG))
-        return cycles
+
+        # Calculate radius of the graph
+        G = DG.to_undirected()
+        radius = None
+        if len(G) > 0 and nx.is_connected(G):
+            radius = nx.radius(G)
+        return cycles, radius
 
     def print_cycles(self, Npat: int = 0) -> None:
         """Print information about detected cycles."""
@@ -96,7 +100,8 @@ class CycleAnalyzer:
         # Augment each pattern
         print(self.struct)
         for pattern_idx in range(len(self.struct)):
-            self.cycles.append(self.detect_cycles(Npat=pattern_idx))
+            cycles, radius = self.detect_cycles_and_radius(Npat=pattern_idx)
+            self.cycles.append(cycles)
             for i in self.struct[pattern_idx].keys():
                 self.struct[pattern_idx][i]['cycle'] = -1
                 self.struct[pattern_idx][i]['ones in cycle'] = 0
@@ -111,7 +116,9 @@ class CycleAnalyzer:
                             for j in self.cycles[pattern_idx][c]
                         )
                         break
-
+                
+            self.struct[pattern_idx]['radius'] = -1 if radius is None else radius
+    
     def save_graph_data(self) -> None:
         """Save the augmented graph data back to the JSON file."""
         if self.struct is None:
@@ -125,8 +132,8 @@ class CycleAnalyzer:
         Run the complete pipeline: load, detect cycles, augment, and save.
         """
         self.load_graph_data()
-        #print(self.struct)
         self.augment_struct_with_cycles()
+        #print(self.struct)
         self.save_graph_data()
         for pattern_idx in range(len(self.struct)):
             print(f"Pattern {pattern_idx}:")
