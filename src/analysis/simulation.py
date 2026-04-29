@@ -124,19 +124,20 @@ class Agent:
             return False
 
 
-def load_graph_data(n: int, s: int) -> dict:
+def load_graph_data(n: int, s: int, sufix: str = '') -> dict:
     """
     Load graph data from a JSON file.
     
     Args:
         n: The first parameter for the filename
         s: The second parameter for the filename
+        sufix: The suffix for the filename
         
     Returns:
         Dictionary containing the graph data
     """
 
-    filename = f'graph_data_N{n:d}s{s:d}.json'
+    filename = f'graph_data_N{n:d}s{s:d}{sufix}.json'
 
     file_path = PATHS['graphs'] / filename
     with open(file_path, 'r') as f:
@@ -190,17 +191,19 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
              down_lapses: list[int] = None,
              down_agents: list[str] = None,
              random_thresh: float = 0.5,
-             seed: int = 54
+             seed: int = 54,
+             sufix: str = '',
              ) -> list[str]:
     #For reproducibility
     rng = np.random.default_rng(seed)
 
-    data = load_graph_data(n, s)
-    #print(data)
+    data = load_graph_data(n, s, sufix)
+    print(data)
     agent_info = {}
     for node_id in data[idx]:
-        agent_id = "".join(filter(str.isdigit,node_id))
-        agent_info[agent_id] = agent_info.get(agent_id,{}) | {node_id: data[idx][node_id]}
+        if node_id != 'max_cycle_size' and node_id != 'diameter':
+            agent_id = "".join(filter(str.isdigit,node_id))
+            agent_info[agent_id] = agent_info.get(agent_id,{}) | {node_id: data[idx][node_id]}
     #print(agent_info) 
     
     node_ids = [j for i in agent_info for j in agent_info[i]]
