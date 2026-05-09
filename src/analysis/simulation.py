@@ -19,12 +19,13 @@ class Node:
         return f"id:{self.id}\nstrategy:{self.strategy}\nneighbors:{self.neighbors}\nstate:{self.state}"
 
 class Agent:
-    def __init__(self, id: str, node_data: dict, state: str = '0', random_thresh: float = 0.5):
+    def __init__(self, id: str, node_data: dict, state: str = '0', random_thresh: float = 0.5, print_info: bool = False):
         self.id = id
         self.weight = len(node_data)
         self.state = state
         self.is_down = False
         self.correct = False
+        self.print = print_info
         self.random_thresh = random_thresh
         #print(node_data)
         self.nodes = []
@@ -57,7 +58,8 @@ class Agent:
         return {node.cycle: node.ones_in_cycle for node in self.nodes}
 
     def back_online(self):
-        print(f"Agent {self.id} back online.")
+        if self.print:
+            print(f"Agent {self.id} back online.")
         self.is_down = False
         self.correct = True
 
@@ -66,13 +68,16 @@ class Agent:
             if key[i] in self.nodes[i].strategy:
                 self.nodes[i].state = self.nodes[i].strategy[key[i]]
             else:
-                print(f"Agent {self.id}, node {self.nodes[i].id}: key '{key}' not found")
+                if self.print:
+                    print(f"Agent {self.id}, node {self.nodes[i].id}: key '{key}' not found")
                 self.nodes[i].state = rng.choice(['0', '1'])
 
         if self.is_down:
-            print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...")
+            if self.print:
+                print(f"Agent {self.id} (cycle {self.cycle}) is down. Randomizing state...")
             state_str = self.get_state_str()
-            print(f"Should be '{state_str}' ",end=' ')
+            if self.print:
+                print(f"Should be '{state_str}' ",end=' ')
             nid = rng.choice(range(self.weight))
             for i in range(self.weight):
                 if i == nid:
@@ -80,7 +85,8 @@ class Agent:
                 else:
                     self.nodes[i].state = '0'
             state_str = self.get_state_str()
-            print(f"but is now '{state_str}'")
+            if self.print:
+                print(f"but is now '{state_str}'")
         else:
             # After the node goes back online, the system should correct
             # itself.
@@ -103,10 +109,12 @@ class Agent:
                     else:
                         self.nodes[i].state = '0'
                 curr_state = self.get_state_str()
-                print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
+                if self.print:
+                    print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
                 return True
             else:
-                print(f"Agent {self.id} no correction performed.")
+                if self.print:
+                    print(f"Agent {self.id} no correction performed.")
                 return False
         elif (state_status-self.nodes[nid].ones_in_cycle > 0) and self.get_state() == '1':
             if(rng.random() < self.random_thresh):
@@ -114,13 +122,16 @@ class Agent:
                 for i in range(self.weight):
                     self.nodes[i].state = '0'
                 curr_state = self.get_state_str()
-                print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
+                if self.print:
+                    print(f"Agent {self.id} correcting state from {prev_state} to {curr_state}")
                 return True
             else:
-                print(f"Agent {self.id} no correction performed.")
+                if self.print:
+                    print(f"Agent {self.id} no correction performed.")
                 return False
         else:
-            print(f"Agent {self.id} no correction performed.")
+            if self.print:
+                print(f"Agent {self.id} no correction performed.")
             return False
 
 
@@ -172,6 +183,7 @@ def get_state_from_nodes(agents: list[Agent]) -> str:
     return state
 
 #def print_pattern(agent_info: dict) -> None:
+    #print(down_agents)
 #    for t in range(len(agent_info['0']['pattern'])):
 #        state = get_state(agent_info, t)
 #        print(state)
@@ -193,12 +205,14 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
              random_thresh: float = 0.5,
              seed: int = 54,
              sufix: str = '',
+             print_info: bool = False
              ) -> list[str]:
     #For reproducibility
     rng = np.random.default_rng(seed)
 
     data = load_graph_data(n, s, sufix)
-    print(data)
+    if print_info:
+        print(data)
     agent_info = {}
     for node_id in data[idx]:
         if node_id != 'max_cycle_size' and node_id != 'diameter':
@@ -224,17 +238,20 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
             id=i,
             node_data=agent_info[i],
             state=prev_state[int(i)],
-            random_thresh=random_thresh
+            random_thresh=random_thresh,
+            print_info = print_info
         )
         agents.append(agent)
         #print(str(agent))
         num_cycles = max(num_cycles, max(agent.get_ones_in_cycles().keys()) + 1)
 
-    for a in agents:
-        print(f"Agent {a.id} weight: {a.weight} cycles: {a.get_ones_in_cycles()}")
+    if print_info:
+        for a in agents:
+            print(f"Agent {a.id} weight: {a.weight} cycles: {a.get_ones_in_cycles()}")
 
     prev_node_state = get_state_from_nodes(agents)
-    print(get_state_from_agents(agents), get_state_from_nodes(agents))
+    if print_info:
+        print(get_state_from_agents(agents), get_state_from_nodes(agents))
     #print(f"num_cycles: {num_cycles}")
 
     ## Print info about agents that will go down---
@@ -251,7 +268,8 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
     ones_in_c = [ones_in_cycle]
     for step in range(Nsteps):
         if down_agents is not None:
-            print("Down agents:", [da for da in down_agents if agents[int(da)].is_down])
+            if print_info:
+                print("Down agents:", [da for da in down_agents if agents[int(da)].is_down])
             for i in range(len(down_agents)):            
                 if step == down_times[i]:
                     agents[int(down_agents[i])].is_down = True
@@ -279,7 +297,8 @@ def simulate(n: int, s: int, idx: int, Nsteps: int,
         pattern.append(state)
         prev_node_state = get_state_from_nodes(agents)
         ones_in_c.append(ones_in_cycle)
-        print(f"step: {step}\nstate: {state} {prev_node_state}\nstate_status: {ones_in_cycle}")
-        print()
+        if print_info:
+            print(f"step: {step}\nstate: {state} {prev_node_state}\nstate_status: {ones_in_cycle}")
+            print()
 
     return pattern, ones_in_c
